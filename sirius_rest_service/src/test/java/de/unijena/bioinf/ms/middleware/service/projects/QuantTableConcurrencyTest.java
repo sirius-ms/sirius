@@ -1,7 +1,10 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.QuantTable;
 import de.unijena.bioinf.ms.middleware.model.tags.TagDefinition;
@@ -22,6 +25,7 @@ import org.junit.jupiter.api.AutoClose;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.io.IOException;
 import java.net.URI;
@@ -31,9 +35,12 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The features of a table are read by several threads at once, so a table has to come out exactly as it would from a
@@ -121,6 +128,35 @@ class QuantTableConcurrencyTest {
         assertArrayEquals(first.getColumnIds(), second.getColumnIds());
         for (int row = 0; row < first.getValues().length; row++)
             assertArrayEquals(first.getValues()[row], second.getValues()[row]);
+    }
+
+    /**
+     * A computation can have every CPU thread busy while the table is asked for. The read must not wait for one of
+     * them to become free: the calling thread reads, and CPU threads only help when they are free.
+     */
+    @Test
+    @Timeout(120)
+    @DisplayName("the table is read while every CPU thread is busy")
+    void aTableIsReadWhileEveryCpuThreadIsBusy() throws InterruptedException {
+        int threads = SiriusJobs.getGlobalJobManager().getCPUThreads();
+        CountDownLatch busy = new CountDownLatch(threads), release = new CountDownLatch(1);
+        for (int i = 0; i < threads; i++)
+            SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<Boolean>(JJob.JobType.CPU) {
+                @Override
+                protected Boolean compute() throws InterruptedException {
+                    busy.countDown();
+                    release.await();
+                    return true;
+                }
+            });
+        try {
+            assertTrue(busy.await(30, TimeUnit.SECONDS), "every CPU thread is busy");
+            QuantTable table = project.getCompoundQuantification(null, QuantMeasure.APEX_INTENSITY,
+                    EnumSet.noneOf(QuantTable.OptField.class)).orElseThrow();
+            assertRows(expectedCompoundRows, table);
+        } finally {
+            release.countDown();
+        }
     }
 
     /** the table is ordered by id, so a row can be found by the position of its id */

@@ -122,7 +122,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -756,45 +755,30 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
      * Every aligned feature is asked for on its own, and the ids are handed out from one cursor so that the workers
      * stay close to each other in the index and a feature with many detections does not hold up a worker that is
      * already done. An 'in' filter over many ids looks like the obvious alternative but costs hundreds of times more
-     * per call, so many small queries are cheaper than few large ones, and they parallelize.
+     * per call, so many small queries are cheaper than few large ones, and they parallelize. The workers are the
+     * calling thread and every CPU thread that is free, see {@link ParallelChunks}, so the table does not wait for a
+     * running computation to free a CPU thread.
      *
      * @param rowOf assigns a feature to the row it is quantified in, its aligned feature or its compound
      */
+    @SneakyThrows
     private Map<Long, double[]> readRows(Collection<Long> alignedFeatureIds, Function<Feature, Long> rowOf,
                                          QuantMeasure type, Object2IntMap<String> columnOfRun, int columns) {
         if (alignedFeatureIds.isEmpty())
             return Map.of();
 
         //ascending, so the workers walk the index in one direction instead of jumping around in it
-        Long[] ids = alignedFeatureIds.stream().sorted().toArray(Long[]::new);
+        long[] ids = alignedFeatureIds.stream().mapToLong(Long::longValue).sorted().toArray();
         Map<Long, double[]> rows = new ConcurrentHashMap<>();
-        AtomicInteger cursor = new AtomicInteger();
-
-        BasicMasterJJob<Object> reader = new BasicMasterJJob<>(JJob.JobType.CPU) {
-            @Override
-            protected Object compute() throws Exception {
-                int workers = Math.max(1, Math.min(ids.length, SiriusJobs.getGlobalJobManager().getCPUThreads()));
-                for (int i = 0; i < workers; i++)
-                    submitSubJob(new BasicJJob<Object>(JJob.JobType.CPU) {
-                        @Override
-                        protected Object compute() throws Exception {
-                            int index;
-                            while ((index = cursor.getAndIncrement()) < ids.length) {
-                                checkForInterruption();
-                                accumulateFeaturesOf(ids[index], rows, rowOf, type, columnOfRun, columns);
-                            }
-                            return Boolean.TRUE;
-                        }
-                    });
-                awaitAllSubJobs();
-                return Boolean.TRUE;
-            }
-        };
-        //an interactive read should not wait behind a queue of computations, but it does not outrank what the user
-        //explicitly asked to run now either
-        reader.setPriority(JJob.JobPriority.HIGH);
-        SiriusJobs.getGlobalJobManager().submitJob(reader).takeResult();
-
+        try {
+            ParallelChunks.run(SiriusJobs.getGlobalJobManager(), ids.length, 1, (from, to) -> {
+                for (int i = from; i < to; i++)
+                    accumulateFeaturesOf(ids[i], rows, rowOf, type, columnOfRun, columns);
+            });
+        } catch (ExecutionException e) {
+            // unwrapped, so a caller sees what the read threw - as it would have on its own thread
+            throw e.getCause();
+        }
         return rows;
     }
 
