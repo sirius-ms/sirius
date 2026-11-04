@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinitions;
 import de.unijena.bioinf.ms.persistence.model.properties.ProjectMaximumIntensities;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
@@ -159,6 +160,41 @@ public class BlankRunIntensityTest {
         // and back: a run that is no blank any more counts again
         project.removeTagsFromObject(Run.class, String.valueOf(blankRun), List.of(TagDefinitions.SAMPLE_TYPE.getTagName()));
         assertEquals(List.of("contaminated"), namesMatching("intensity.apex:[500000 TO *]"));
+    }
+
+    /**
+     * Changes what a feature measured in storage only, so its document in the index no longer matches - which
+     * one does afterwards tells whether the documents were rewritten.
+     */
+    @SneakyThrows
+    private void changeStoredApexOnly(String alignedFeatureId, double apex) {
+        List<Feature> runFeatures = ps.getStorage().findStr(Filter.where("alignedFeatureId").eq(Long.parseLong(alignedFeatureId)),
+                Feature.class).toList();
+        runFeatures.forEach(f -> f.setApexIntensity(apex));
+        ps.getStorage().upsertAll(runFeatures);
+    }
+
+    /**
+     * Only whether a run is a blank decides what its features count towards, so a write of the run type that
+     * leaves every run as blank or not as it was - the same type again, one non-blank type for another, a
+     * non-blank type removed - rewrites no document.
+     */
+    @Test
+    public void testARunTypeChangeThatLeavesTheBlanksAsTheyWereRewritesNothing() {
+        tagRun(blankRun, TagDefinitions.SAMPLE_TYPE_BLANK);
+        tagRun(sampleRun, TagDefinitions.SAMPLE_TYPE_SAMPLE);
+        String id = importFeature("sampleOnly", measured(sampleRun, 1.0e5));
+        changeStoredApexOnly(id, 9.0e5);
+
+        tagRun(blankRun, TagDefinitions.SAMPLE_TYPE_BLANK);
+        tagRun(sampleRun, TagDefinitions.SAMPLE_TYPE_SAMPLE);
+        tagRun(sampleRun, TagDefinitions.SAMPLE_TYPE_POOLED_QC);
+        project.removeTagsFromObject(Run.class, String.valueOf(sampleRun), List.of(TagDefinitions.SAMPLE_TYPE.getTagName()));
+        assertEquals(List.of(), namesMatching("intensity.apex:[500000 TO *]"), "the document must not have been rewritten");
+
+        // control: a change of what is a blank does rewrite it, so the stale document above is a real finding
+        tagRun(blankRun, TagDefinitions.SAMPLE_TYPE_SAMPLE);
+        assertEquals(List.of("sampleOnly"), namesMatching("intensity.apex:[500000 TO *]"));
     }
 
     /** The percentage of a sample feature is still held against its own run's maximum. */
