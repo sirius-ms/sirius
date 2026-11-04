@@ -5,6 +5,10 @@ allprojects {
 dependencies{
     api project(':chemistry_base')
     implementation libs.minio
+    constraints {
+        // minio declares an old bcprov-jdk18on; its client code does not use it, but other libraries do if present
+        implementation(libs.bcprov) { because 'the version minio brings has known vulnerabilities' }
+    }
     implementation libs.xz
     implementation libs.zstdJni
 }
