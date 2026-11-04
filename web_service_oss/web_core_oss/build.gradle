@@ -8,8 +8,10 @@ dependencies {
     api project(':chemical_db_oss:chemdb_utils_oss')
 
     api libs.cdkInchi
-    // maven version number parsing
-    api libs.mavenArtifact
+    // maven version number parsing. Only DefaultArtifactVersion is used, which does not need plexus-utils
+    api(libs.mavenArtifact) {
+        exclude group: 'org.codehaus.plexus', module: 'plexus-utils'
+    }
     // jason marshalling
     api libs.okhttp
     api libs.jdbi3Jackson2

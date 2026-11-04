@@ -4,12 +4,13 @@ org.json:json:1.0|https://github.com/stleary/JSON-java|PUBLIC DOMAIN|
 org.mozilla.intl:chardet:1.0|https://www-archive.mozilla.org/projects/intl/chardet.html|Public Domain|
 tw.edu.ntu.csie:libsvm:3.20|https://www.csie.ntu.edu.tw/~cjlin/libsvm/|The 3-Clause BSD License|https://opensource.org/licenses/BSD-3-Clause
 xml-apis:xml-apis:2.0.2||Apache License, Version 1.1|http://www.apache.org/licenses/LICENSE-1.1
-com.teamdev.jxbrowser:jxbrowser-linux64:8.8.0|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
-com.teamdev.jxbrowser:jxbrowser-linux64-arm:8.8.0|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
-com.teamdev.jxbrowser:jxbrowser-wind64:8.8.0|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
-com.teamdev.jxbrowser:jxbrowser-mac:8.8.0|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
-com.teamdev.jxbrowser:jxbrowser-mac-arm:8.8.0|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
-com.teamdev.jxbrowser:jxbrowser-swing:8.8.0|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
+com.teamdev.jxbrowser:jxbrowser:9.3.1|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
+com.teamdev.jxbrowser:jxbrowser-swing:9.3.1|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
+com.teamdev.jxbrowser:jxbrowser-linux64:9.3.1|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
+com.teamdev.jxbrowser:jxbrowser-linux64-arm:9.3.1|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
+com.teamdev.jxbrowser:jxbrowser-win64:9.3.1|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
+com.teamdev.jxbrowser:jxbrowser-mac:9.3.1|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
+com.teamdev.jxbrowser:jxbrowser-mac-arm:9.3.1|https://teamdev.com/jxbrowser/|Proprietary, see COPYING.txt|
 org.jdesktop:timingframework:0.55||Apache License, Version 2.0|https://www.apache.org/licenses/LICENSE-2.0.txt
 raven.swing:spinner-progress:1.0.0|https://github.com/DJ-Raven/spinner-progress|MIT License|https://opensource.org/license/mit
 edu.ucdavis.fiehnlab.splash:core:1.8|https://github.com/berlinguyinca/spectra-hash|The 3-Clause BSD License|https://opensource.org/licenses/BSD-3-Clause

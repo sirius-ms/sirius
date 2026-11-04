@@ -43,9 +43,6 @@ dependencies {
 
     api libs.glazedlists
 
-    api libs.batikRasterizer
-    api libs.fop
-
     implementation libs.flatlaf
     implementation libs.flatlafExtras
     implementation libs.jsvg

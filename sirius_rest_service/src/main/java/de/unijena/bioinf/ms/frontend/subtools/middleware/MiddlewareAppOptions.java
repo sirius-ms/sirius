@@ -67,6 +67,12 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
         System.setProperty("server.port", String.valueOf(port));
     }
 
+    @CommandLine.Option(names = {"--address"}, description = {"Specify the network address on which the SIRIUS REST Service should listen (Default: 127.0.0.1, reachable from this computer only).",
+            "Use 0.0.0.0 to listen on all network interfaces, e.g. to reach the service from another computer or from outside a container. The service uses unencrypted HTTP, so expose it to trusted networks only."})
+    private void setAddress(String address) {
+        System.setProperty("server.address", address);
+    }
+
     @CommandLine.Option(names = {"--enable-rest-shutdown", "-s"}, description = "Allows to shut down the SIRIUS REST Service via a rest api call (/actuator/shutdown)", defaultValue = "false")
     private void setShutdown(boolean enableRestShutdown) {
         if (enableRestShutdown) {

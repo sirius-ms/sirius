@@ -72,7 +72,9 @@ jobs:
         shell: bash
         run: |
           chmod +x ./gradlew
-          ./gradlew --no-daemon --stacktrace printJvmArgs clean sirius_dist:sirius_gui_dist:buildJpDists \
+          # Windows stops at the app image, so that its EXEs are signed before they are packaged into ZIP and MSI
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then DIST_TASK=distImage; else DIST_TASK=buildJpDists; fi
+          ./gradlew --no-daemon --stacktrace printJvmArgs clean sirius_dist:sirius_gui_dist:$DIST_TASK \
             -P "build.sirius.platform=${{ matrix.os }}-${{ matrix.targetArchitecture }}" \
             -P "build.sirius.starter.jdk.include=true" \
             -P "jxbrowser.license.key=${{ secrets.JXBROWSER_LICENCE_KEY }}" \
@@ -83,7 +85,35 @@ jobs:
             -P "de.unijena.bioinf.build.MACOS_TEAM_ID=${{ secrets.MACOS_TEAM_ID }}"
 
       - if: matrix.os == 'windows-latest'
-        name: Azure Trusted Signing for Widows MSI
+        name: Azure Trusted Signing for Windows EXEs
+        uses: Azure/artifact-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_ENDPOINT }}
+          signing-account-name: ${{ secrets.AZURE_CODE_SIGNING_NAME }}
+          certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
+
+          # Sign the launchers (sirius.exe, sirius-gui.exe) in the root of the app image. Not recursive: the
+          # bundled runtime's EXEs are signed by their vendor already.
+          files-folder: ./sirius_dist/sirius_gui_dist/build/jpDists/sirius/
+          files-folder-filter: exe
+          file-digest: SHA256
+          description: 'SIRIUS'
+
+      - if: matrix.os == 'windows-latest'
+        name: Gradle Package Windows
+        shell: bash
+        run: |
+          # -x distImage: package the image whose EXEs were just signed, instead of building a new one
+          ./gradlew --no-daemon --stacktrace sirius_dist:sirius_gui_dist:buildJpDists -x distImage \
+            -P "build.sirius.platform=${{ matrix.os }}-${{ matrix.targetArchitecture }}" \
+            -P "build.sirius.starter.jdk.include=true" \
+            -P "jxbrowser.license.key=${{ secrets.JXBROWSER_LICENCE_KEY }}"
+
+      - if: matrix.os == 'windows-latest'
+        name: Azure Trusted Signing for Windows MSI
         uses: Azure/artifact-signing-action@v2
         with:
           azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -111,6 +141,20 @@ jobs:
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.pkg
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.deb
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.sha256
+            ./sirius_dist/sirius_gui_dist/build/sbom/*.cdx.json
+
+      - name: Locate SBOM
+        id: sbom
+        shell: bash
+        run: echo "file=$(ls ./sirius_dist/sirius_gui_dist/build/sbom/*.cdx.json)" >> "$GITHUB_OUTPUT"
+
+      # Informational: findings that do not apply to SIRIUS are documented in dependency-check-suppressions.xml
+      - name: Scan SBOM for known vulnerabilities
+        uses: anchore/scan-action@v7
+        with:
+          sbom: ${{ steps.sbom.outputs.file }}
+          fail-build: false
+          output-format: table
 
 #  dockergen:
 #    needs: [ distGUI ]
