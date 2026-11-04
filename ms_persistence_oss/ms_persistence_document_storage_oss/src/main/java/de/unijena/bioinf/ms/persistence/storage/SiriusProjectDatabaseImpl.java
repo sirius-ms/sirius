@@ -20,9 +20,7 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.ParallelChunks;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
@@ -44,7 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -170,9 +167,9 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
     /**
      * Folds every stored feature into fresh maxima, read alignment by alignment: the keys of the aligned and of
      * the isotopic-aligned features - whose run features are stored under the isotopic alignment's own id, and
-     * are folded in on import like any other - handed out in chunks from a shared cursor to one
-     * {@code JobType.CPU} sub-job per core, each fetching a chunk's run features over the alignedFeatureId index
-     * and folding them into maxima of its own, merged at the end.
+     * are folded in on import like any other - handed out in chunks from a shared cursor to the calling thread
+     * and every CPU thread that is free (see {@link ParallelChunks}), each fetching a chunk's run features over
+     * the alignedFeatureId index and folding them into maxima of its own, merged at the end.
      * <p>
      * Alignments rather than the run features' own keys: there are far fewer of them, so reading the keys to hand
      * out costs a fraction. A shared cursor rather than one contiguous block of chunks per worker: workers taking
@@ -198,48 +195,32 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
         if (chunks.isEmpty())
             return new Derived(new ProjectMaximumIntensities(), keepRunFeatures ? RunFeatureValues.of(List.of()) : null);
 
-        int workers = Math.clamp(SiriusJobs.getGlobalJobManager().getCPUThreads(), 1, chunks.size());
-        AtomicInteger cursor = new AtomicInteger();
         record Share(ProjectMaximumIntensities maxima, RunFeatureValues.Part runFeatures) {
         }
-
-        return SiriusJobs.getGlobalJobManager().submitJob(new BasicMasterJJob<Derived>(JJob.JobType.CPU) {
-            @Override
-            protected Derived compute() throws Exception {
-                List<BasicJJob<Share>> running = new ArrayList<>(workers);
-                for (int worker = 0; worker < workers; worker++)
-                    running.add(submitSubJob(new BasicJJob<>(JobType.CPU) {
-                        @Override
-                        protected Share compute() throws Exception {
-                            Share share = new Share(new ProjectMaximumIntensities(),
-                                    keepRunFeatures ? new RunFeatureValues.Part() : null);
-                            int chunk;
-                            while ((chunk = cursor.getAndIncrement()) < chunks.size()) {
-                                checkForInterruption();
-                                boolean keep = keepRunFeatures && chunk < alignedChunks;
-                                try (Stream<Feature> features = getStorage().findAllByIndexedFieldStr("alignedFeatureId",
-                                        chunks.get(chunk), Feature.class)) {
-                                    features.forEach(f -> {
-                                        share.maxima().fold(List.of(f));
-                                        if (keep)
-                                            share.runFeatures().add(f);
-                                    });
-                                }
-                            }
-                            return share;
+        // the calling thread reads chunks itself, and every CPU thread that is free joins in
+        List<Share> shares = ParallelChunks.run(SiriusJobs.getGlobalJobManager(), chunks.size(), 1,
+                () -> new Share(new ProjectMaximumIntensities(), keepRunFeatures ? new RunFeatureValues.Part() : null),
+                (share, from, to) -> {
+                    for (int chunk = from; chunk < to; chunk++) {
+                        boolean keep = keepRunFeatures && chunk < alignedChunks;
+                        try (Stream<Feature> features = getStorage().findAllByIndexedFieldStr("alignedFeatureId",
+                                chunks.get(chunk), Feature.class)) {
+                            features.forEach(f -> {
+                                share.maxima().fold(List.of(f));
+                                if (keep)
+                                    share.runFeatures().add(f);
+                            });
                         }
-                    }));
-                ProjectMaximumIntensities derived = new ProjectMaximumIntensities();
-                List<RunFeatureValues.Part> parts = new ArrayList<>(workers);
-                for (BasicJJob<Share> worker : running) {
-                    Share share = worker.awaitResult();
-                    derived.merge(share.maxima());
-                    if (keepRunFeatures)
-                        parts.add(share.runFeatures());
-                }
-                return new Derived(derived, keepRunFeatures ? RunFeatureValues.of(parts) : null);
-            }
-        }).awaitResult();
+                    }
+                });
+        ProjectMaximumIntensities derived = new ProjectMaximumIntensities();
+        List<RunFeatureValues.Part> parts = new ArrayList<>(shares.size());
+        for (Share share : shares) {
+            derived.merge(share.maxima());
+            if (keepRunFeatures)
+                parts.add(share.runFeatures());
+        }
+        return new Derived(derived, keepRunFeatures ? RunFeatureValues.of(parts) : null);
     }
 
     private Set<Class<?>> getRelatedToAF() {

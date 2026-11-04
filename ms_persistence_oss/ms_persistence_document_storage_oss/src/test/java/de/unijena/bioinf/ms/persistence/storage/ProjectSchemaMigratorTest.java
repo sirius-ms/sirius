@@ -1,11 +1,14 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
@@ -19,6 +22,7 @@ import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureSearchResult;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -28,6 +32,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -150,6 +156,35 @@ public class ProjectSchemaMigratorTest {
             // this fixture has no detected adducts on any feature -> nothing to backfill, project property stays absent
             assertTrue(db.findDetectedAdducts().isEmpty(), "no real adducts to backfill for this fixture");
         });
+    }
+
+    /**
+     * Opening a project converts it, and a computation can have every CPU thread busy meanwhile: the conversion
+     * must not wait for them - it runs on the calling thread, and CPU threads only help when they are free.
+     */
+    @Test
+    @Timeout(120)
+    public void testAConversionFinishesWhileEveryCpuThreadIsBusy() throws Exception {
+        int threads = SiriusJobs.getGlobalJobManager().getCPUThreads();
+        CountDownLatch busy = new CountDownLatch(threads), release = new CountDownLatch(1);
+        for (int i = 0; i < threads; i++)
+            SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<Boolean>(JJob.JobType.CPU) {
+                @Override
+                protected Boolean compute() throws InterruptedException {
+                    busy.countDown();
+                    release.await();
+                    return true;
+                }
+            });
+        try {
+            assertTrue(busy.await(30, TimeUnit.SECONDS), "every CPU thread is busy");
+            withOldProject(db -> {
+                assertTrue(ProjectSchemaMigrator.migrateIfNeeded(db));
+                assertTrue(db.getStorage().isFieldPresent("hasMsMs", AlignedFeatures.class));
+            });
+        } finally {
+            release.countDown();
+        }
     }
 
     @Test
