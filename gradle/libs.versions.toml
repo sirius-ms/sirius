@@ -4,7 +4,7 @@ springDoc = "3.0.3"
 # springDoc 3.0.3 bundles swagger-ui 5.32.2, whose DOMPurify (3.3.2) has known CVEs; 5.34.0 carries DOMPurify 3.4.16.
 # Drop this pin once a springDoc release for our Spring Boot line bundles a newer swagger-ui by itself.
 swaggerUi = "5.34.0"
-jjobs = "0.13.2"
+jjobs = "0.14.1"
 cdk = "2.12"
 jetbrainsAnnotations = "26.0.1"
 trove4j = "3.1.0"  # DEPRECATED -> use fast util instead
