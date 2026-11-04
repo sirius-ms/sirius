@@ -358,14 +358,23 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return storage().primaryKeys(AlignedFeatures.class).stream().map(id -> ((Number) id).longValue()).toList();
     }
 
+    /** Whether a tag is a run's type, the tag that says whether the run is a blank. */
+    private static boolean isRunType(@NotNull Tag tag) {
+        return TagDefinitions.SAMPLE_TYPE.getTagName().equals(tag.getTagName());
+    }
+
     /**
-     * A run's type changed: whether it is a blank decides whether its features count towards the intensities
-     * its aligned features report, so their documents are rewritten - all of them, see
-     * {@link #allAlignedFeatureIds}. The maxima count every run whatever its type, so nothing else moves.
+     * A run's type was written: whether it is a blank decides whether its features count towards the intensities
+     * its aligned features report, so if that changed for any run their documents are rewritten - all of them,
+     * see {@link #allAlignedFeatureIds}. Any other change of type - the same type again, one non-blank type for
+     * another - changes no intensity and rewrites nothing. The maxima count every run whatever its type, so
+     * nothing else moves.
+     *
+     * @param blankRunsBefore the {@link #blankRuns} before the write
      */
     @SneakyThrows
-    private void reindexFeaturesOfRuns(@NotNull Collection<Long> runIds) {
-        if (searchService == null || runIds.isEmpty())
+    private void reindexIfBlankRunsChanged(@NotNull LongSet blankRunsBefore) {
+        if (searchService == null || blankRuns().equals(blankRunsBefore))
             return;
         synchronized (searchIndexLock) {
             feedFeaturesToIndex(allAlignedFeatureIds(), alfs -> searchService.updateDocuments(projectId, alfs));
@@ -2709,6 +2718,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private void addTagsToObjects(Class<? extends Taggable> taggedObjectClass, Map<String, ? extends Collection<? extends Tag>> objectToTags) {
         try {
             final Class<?> taggedProjectObjectClass = convertToProjectObjectClass(taggedObjectClass);
+            final LongSet blankRunsBefore = taggedObjectClass.equals(Run.class) && objectToTags.values().stream()
+                    .flatMap(Collection::stream).anyMatch(NoSQLProjectImpl::isRunType) ? blankRuns() : null;
 
             Map<String, de.unijena.bioinf.ms.persistence.model.core.tags.TagDefinition> tagDefByName = new HashMap<>();
             List<de.unijena.bioinf.ms.persistence.model.core.tags.Tag> upsertTags = new ArrayList<>();
@@ -2754,10 +2765,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             if (searchService != null)
                 searchService.addTagsToDocuments(projectId, objectToTags, taggedObjectClass);
 
-            if (taggedObjectClass.equals(Run.class))
-                reindexFeaturesOfRuns(objectToTags.entrySet().stream()
-                        .filter(e -> e.getValue().stream().anyMatch(tag -> TagDefinitions.SAMPLE_TYPE.getTagName().equals(tag.getTagName())))
-                        .map(e -> Long.parseLong(e.getKey())).toList());
+            if (blankRunsBefore != null)
+                reindexIfBlankRunsChanged(blankRunsBefore);
         } catch (IOException e) {
             log.error("Error when assigning tags to Object", e);
             throw new ResponseStatusException(INTERNAL_SERVER_ERROR);
@@ -2767,6 +2776,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public void removeTagsFromObject(Class<? extends Taggable> taggedOobjectClass, String taggedObjectId, List<String> tagNames) {
+        final LongSet blankRunsBefore = taggedOobjectClass.equals(Run.class)
+                && tagNames.contains(TagDefinitions.SAMPLE_TYPE.getTagName()) ? blankRuns() : null;
         storage().removeAll(Filter.and(
                 Filter.where("taggedObjectClass").eq(convertToProjectObjectClass(taggedOobjectClass).getName()),
                 Filter.where("taggedObjectId").eq(Long.parseLong(taggedObjectId)),
@@ -2777,8 +2788,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (searchService != null)
             searchService.removeTagsFromDocument(projectId, taggedObjectId, tagNames, (Class<? extends Taggable>) taggedOobjectClass);
 
-        if (taggedOobjectClass.equals(Run.class) && tagNames.contains(TagDefinitions.SAMPLE_TYPE.getTagName()))
-            reindexFeaturesOfRuns(List.of(Long.parseLong(taggedObjectId)));
+        if (blankRunsBefore != null)
+            reindexIfBlankRunsChanged(blankRunsBefore);
     }
 
     @SneakyThrows
