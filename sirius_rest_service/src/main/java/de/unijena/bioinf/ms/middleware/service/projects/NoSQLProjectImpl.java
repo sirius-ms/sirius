@@ -2326,8 +2326,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         // to be brought down to what was asked for. annotateApiFeature is what does that - for each opt field it
         // loads what is missing and drops what nobody wants - and it is cheap on a feature that came out of the
         // index, because every load it could do is guarded on the field still being absent.
-        features.stream().parallel().forEach(f ->
-                annotateApiFeature(Long.parseLong(f.getAlignedFeatureId()), f, msDataSearchPrepared, optFields));
+        mapOnJobs(features.getContent(), f -> {
+            annotateApiFeature(Long.parseLong(f.getAlignedFeatureId()), f, msDataSearchPrepared, optFields);
+            return f;
+        });
 
         return features;
     }
@@ -2359,6 +2361,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return findAlignedFeaturesByIds(featureIds, msDataAsCosineQuery, optFields, null);
     }
 
+    /**
+     * The same for one batch of {@link #feedIdsToIndex}, whose workers already run in parallel: converted on the
+     * worker's own thread.
+     */
     private List<AlignedFeature> findAlignedFeaturesByIds(Collection<Long> featureIds, boolean msDataAsCosineQuery,
                                                           @NotNull EnumSet<AlignedFeature.OptField> optFields,
                                                           @Nullable RunFeatureValues runFeatures) throws IOException {
@@ -2366,7 +2372,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 storage().findAllByPrimaryKeyStr(featureIds, AlignedFeatures.class),
                 msDataAsCosineQuery,
                 optFields,
-                runFeatures);
+                runFeatures,
+                false);
     }
 
     /**
@@ -2389,16 +2396,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private List<AlignedFeature> annotateApiFeatures(@NotNull Stream<AlignedFeatures> apifeatures, boolean msDataAsCosineQuery, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        return annotateApiFeatures(apifeatures, msDataAsCosineQuery, optFields, null);
+        return annotateApiFeatures(apifeatures, msDataAsCosineQuery, optFields, null, true);
     }
 
     /**
-     * @param runFeatures the run features the intensities are computed from, if they were read already - else
-     *                    they are read here
+     * @param runFeatures       the run features the intensities are computed from, if they were read already -
+     *                          else they are read here
+     * @param convertInParallel whether to convert the features on jjobs workers - not when the caller is one of
+     *                          several workers already, which would only put more threads on the same cores
      */
     private List<AlignedFeature> annotateApiFeatures(@NotNull Stream<AlignedFeatures> apifeatures, boolean msDataAsCosineQuery,
                                                      @NotNull EnumSet<AlignedFeature.OptField> optFields,
-                                                     @Nullable RunFeatureValues runFeatures) {
+                                                     @Nullable RunFeatureValues runFeatures, boolean convertInParallel) {
         //third
         Long2ObjectOpenHashMap<AlignedFeatures> dbalf = apifeatures.collect(Collectors.toMap(AlignedFeatures::getAlignedFeatureId, Function.identity(),
                 (existing, replacement) -> existing, Long2ObjectOpenHashMap::new));
@@ -2510,37 +2519,85 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         @NotNull Long2ObjectOpenHashMap<CsiStructureSearchResult> csires = csiJob != null ? csiJob.getResult() : new Long2ObjectOpenHashMap<>();
 
-        List<AlignedFeature> features = dbalf.values().stream()
-                .parallel()
-                .map(alf -> {
-                    long fid = alf.getAlignedFeatureId();
-                    AlignedFeature apiFeture = convertToApiFeature(alf, msDataAsCosineQuery,
-                            EnumSet.noneOf(AlignedFeature.OptField.class));
-                    // Empty rather than null for whatever the bulk query did not find, because null is what
-                    // annotateApiFeature below reads as "not fetched yet" and answers with a query per feature -
-                    // over exactly the features the bulk query has just established have nothing. These are the
-                    // values that per-feature load would arrive at anyway, so nothing about the response
-                    // changes. Mutable, because a fetched collection is something the index update path edits
-                    // in place (see deleteFoldChange).
-                    // convertToQualityMap answers a missing report with an empty map, so this one is already
-                    // "empty, not null" - it only needs the same restraint about a field nobody asked for.
-                    apiFeture.setQualities(optFields.contains(AlignedFeature.OptField.qualities)
-                            ? convertToQualityMap(quality.get(fid)) : null);
-                    apiFeture.setComputedTools(bulkResult(optFields, AlignedFeature.OptField.computedTools,
-                            computed, fid, () -> ComputedSubtools.builder().build()));
-                    apiFeture.setTags(bulkResult(optFields, AlignedFeature.OptField.tags, tags, fid, HashMap::new));
-                    apiFeture.setStats(bulkResult(optFields, AlignedFeature.OptField.statistics,
-                            stats, fid, ArrayList::new));
-                    apiFeture.setIntensity(bulkResult(optFields, AlignedFeature.OptField.intensities,
-                            intensities, fid, FeatureIntensities::unknown));
-                    if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary) && !optFields.contains(AlignedFeature.OptField.topAnnotations))
-                        apiFeture.setTopAnnotations(extractSearchIndexTopAnnotations(fid, csires.get(fid)));
-                    //add additional anotations that are not yes covered by bulk retrieval.
-                    annotateApiFeature(fid, apiFeture, msDataAsCosineQuery, optFields);
-                    return apiFeture;
-                }).toList();
+        Function<AlignedFeatures, AlignedFeature> convert = alf -> {
+            long fid = alf.getAlignedFeatureId();
+            AlignedFeature apiFeture = convertToApiFeature(alf, msDataAsCosineQuery,
+                    EnumSet.noneOf(AlignedFeature.OptField.class));
+            // Empty rather than null for whatever the bulk query did not find, because null is what
+            // annotateApiFeature below reads as "not fetched yet" and answers with a query per feature -
+            // over exactly the features the bulk query has just established have nothing. These are the
+            // values that per-feature load would arrive at anyway, so nothing about the response
+            // changes. Mutable, because a fetched collection is something the index update path edits
+            // in place (see deleteFoldChange).
+            // convertToQualityMap answers a missing report with an empty map, so this one is already
+            // "empty, not null" - it only needs the same restraint about a field nobody asked for.
+            apiFeture.setQualities(optFields.contains(AlignedFeature.OptField.qualities)
+                    ? convertToQualityMap(quality.get(fid)) : null);
+            apiFeture.setComputedTools(bulkResult(optFields, AlignedFeature.OptField.computedTools,
+                    computed, fid, () -> ComputedSubtools.builder().build()));
+            apiFeture.setTags(bulkResult(optFields, AlignedFeature.OptField.tags, tags, fid, HashMap::new));
+            apiFeture.setStats(bulkResult(optFields, AlignedFeature.OptField.statistics,
+                    stats, fid, ArrayList::new));
+            apiFeture.setIntensity(bulkResult(optFields, AlignedFeature.OptField.intensities,
+                    intensities, fid, FeatureIntensities::unknown));
+            if (optFields.contains(AlignedFeature.OptField.topAnnotationsSummary) && !optFields.contains(AlignedFeature.OptField.topAnnotations))
+                apiFeture.setTopAnnotations(extractSearchIndexTopAnnotations(fid, csires.get(fid)));
+            //add additional anotations that are not yes covered by bulk retrieval.
+            annotateApiFeature(fid, apiFeture, msDataAsCosineQuery, optFields);
+            return apiFeture;
+        };
+        List<AlignedFeatures> stored = new ArrayList<>(dbalf.values());
+        return convertInParallel ? mapOnJobs(stored, convert) : stored.stream().map(convert).toList();
+    }
 
-        return features;
+    /** How many items a worker of {@link #mapOnJobs} takes from the shared cursor at a time. */
+    private static final int ITEMS_PER_MAP_CHUNK = 8;
+
+    /**
+     * Applies {@code mapping} to every item on {@code JobType.CPU} jjobs workers, taking chunks of
+     * {@link #ITEMS_PER_MAP_CHUNK} from a shared cursor, and keeps the order of {@code items}. jjobs rather than a
+     * parallel stream: a parallel stream runs on the JVM's common fork-join pool, which jjobs neither sizes nor
+     * knows about, so its threads would compete with every job on the same cores. Fewer items than a chunk are
+     * mapped on the calling thread.
+     */
+    @SneakyThrows
+    private static <T, R> List<R> mapOnJobs(@NotNull List<T> items, @NotNull Function<T, R> mapping) {
+        if (items.size() <= ITEMS_PER_MAP_CHUNK)
+            return items.stream().map(mapping).toList();
+
+        Object[] mapped = new Object[items.size()];
+        int workers = Math.clamp(workers(), 1, (items.size() + ITEMS_PER_MAP_CHUNK - 1) / ITEMS_PER_MAP_CHUNK);
+        AtomicInteger cursor = new AtomicInteger();
+        try {
+            SiriusJobs.getGlobalJobManager().submitJob(new BasicMasterJJob<Boolean>(JJob.JobType.CPU) {
+                @Override
+                protected Boolean compute() throws Exception {
+                    List<BasicJJob<Boolean>> running = new ArrayList<>(workers);
+                    for (int worker = 0; worker < workers; worker++)
+                        running.add(submitSubJob(new BasicJJob<>(JobType.CPU) {
+                            @Override
+                            protected Boolean compute() throws Exception {
+                                int from;
+                                while ((from = cursor.getAndAdd(ITEMS_PER_MAP_CHUNK)) < items.size()) {
+                                    checkForInterruption();
+                                    for (int i = from; i < Math.min(items.size(), from + ITEMS_PER_MAP_CHUNK); i++)
+                                        mapped[i] = mapping.apply(items.get(i));
+                                }
+                                return Boolean.TRUE;
+                            }
+                        }));
+                    for (BasicJJob<Boolean> job : running)
+                        job.awaitResult();
+                    return Boolean.TRUE;
+                }
+            }).awaitResult();
+        } catch (ExecutionException e) {
+            // unwrapped, so a caller sees what the mapping threw - as it would have on its own thread
+            throw e.getCause() instanceof ExecutionException nested && nested.getCause() != null
+                    ? nested.getCause() : e.getCause();
+        }
+        @SuppressWarnings("unchecked") List<R> result = (List<R>) Collections.unmodifiableList(Arrays.asList(mapped));
+        return result;
     }
 
     /**
