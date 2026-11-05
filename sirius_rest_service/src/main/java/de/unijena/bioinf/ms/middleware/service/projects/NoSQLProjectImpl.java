@@ -746,10 +746,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     /**
-     * Loads the features of the given aligned features. The 'in' filter looks every id up in the index of the feature
-     * collection, so the cost grows with the number of requested aligned features and not with the project size.
-     */
-    /**
      * Reads the features of the given aligned features and accumulates them into the rows of a quantification table.
      * <p>
      * Every aligned feature is asked for on its own, and the ids are handed out from one cursor so that the workers
