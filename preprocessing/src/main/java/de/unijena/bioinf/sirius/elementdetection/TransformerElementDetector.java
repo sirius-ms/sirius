@@ -11,8 +11,6 @@ import de.unijena.bioinf.sirius.elementdetection.transformer.TransformerPredicti
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,13 +24,11 @@ public class TransformerElementDetector implements ElementDetection{
     }
 
     private static final TransformerBasedPredictor DEFAULT_INSTANCE = readFromClassPath();
-    private static TransformerBasedPredictor readFromClassPath() {
-        try (final InputStream stream = TransformerElementDetector.class.getResourceAsStream("/transformer.bin");
-             ReadableByteChannel channel = Channels.newChannel(stream)) {
-            ByteBuffer buffer = ByteBuffer.allocate(1500*1000);
-            channel.read(buffer);
-            buffer.flip();
-            return TransformerBasedPredictor.read(buffer);
+    // runs in the static initializer, whose failure is permanent for the JVM: read through a plain stream, not an
+    // interruptible channel, so an interrupted thread that happens to trigger it does not break it
+    static TransformerBasedPredictor readFromClassPath() {
+        try (final InputStream stream = TransformerElementDetector.class.getResourceAsStream("/transformer.bin")) {
+            return TransformerBasedPredictor.read(ByteBuffer.wrap(stream.readAllBytes()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
