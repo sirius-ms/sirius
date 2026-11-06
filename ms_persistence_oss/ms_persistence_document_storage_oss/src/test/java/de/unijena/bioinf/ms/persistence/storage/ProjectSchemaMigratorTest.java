@@ -384,7 +384,7 @@ public class ProjectSchemaMigratorTest {
 
     /** A project at the schema before the fold changes were turned, so the conversion has something to do. */
     private static void atTheSchemaBeforeTheFoldChangesWereTurned(NitriteSirirusProject db) throws Exception {
-        db.upsertProjectSchemaVersion(2); // version 3 turned them
+        db.upsertProjectSchemaVersion(new ProjectSchemaVersion(0, 2)); // version 0.3 turned them
     }
 
 
@@ -534,18 +534,57 @@ public class ProjectSchemaMigratorTest {
     }
 
     /**
-     * A project from a newer SIRIUS is left alone rather than half-converted by a migrator that does not know
-     * what it would be converting to.
+     * A project of a newer minor version is one this version can read, and leaves alone rather than half-converts
+     * with a migrator that does not know what it would be converting to.
      */
     @Test
-    public void testAProjectNewerThanTheMigratorIsLeftAlone() {
+    public void testAProjectOfANewerMinorVersionIsLeftAlone() {
         withFreshDb(db -> {
-            db.upsertProjectSchemaVersion(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION + 1);
+            ProjectSchemaVersion newerMinor = new ProjectSchemaVersion(
+                    ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION.major(),
+                    ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION.minor() + 1);
+            db.upsertProjectSchemaVersion(newerMinor);
 
             assertFalse(ProjectSchemaMigrator.migrateIfNeeded(db), "nothing this migrator can do");
-            assertEquals(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION + 1,
-                    db.findProjectSchemaVersion().orElseThrow(),
+            assertEquals(newerMinor, db.findProjectSchemaVersion().orElseThrow(),
                     "and it must not be stamped back down to what this build knows");
+        });
+    }
+
+    /**
+     * A project of a newer major version is one this version cannot read, so it is refused - neither converted
+     * nor stamped - instead of being shown half understood.
+     */
+    @Test
+    public void testAProjectOfANewerMajorVersionIsRefused() {
+        withFreshDb(db -> {
+            ProjectSchemaVersion newerMajor = new ProjectSchemaVersion(
+                    SiriusProjectDocumentDatabase.CURRENT_PROJECT_SCHEMA_VERSION.major() + 1, 0);
+            db.upsertProjectSchemaVersion(newerMajor);
+
+            IncompatibleProjectSchemaException refused = assertThrows(IncompatibleProjectSchemaException.class,
+                    () -> ProjectSchemaMigrator.migrateIfNeeded(db));
+            assertEquals(newerMajor, refused.getRecorded());
+            assertTrue(refused.getMessage().contains(newerMajor.toString()), "the message names the schema");
+            assertEquals(newerMajor, db.findProjectSchemaVersion().orElseThrow(), "and the project is untouched");
+        });
+    }
+
+    /**
+     * Every released SIRIUS reads the version as the one integer it has always read, so both parts are stored in
+     * it - and the plain number a project recorded before there were two parts is that minor version of 0.
+     */
+    @Test
+    public void testTheVersionIsStoredAsTheIntegerReleasedVersionsRead() {
+        withFreshDb(db -> {
+            db.upsertProjectProperty(SiriusProjectDocumentDatabase.PROJECT_SCHEMA_VERSION_KEY, 3);
+            assertEquals(new ProjectSchemaVersion(0, 3), db.findProjectSchemaVersion().orElseThrow(),
+                    "the 3 SIRIUS 6.5.4 records is 0.3");
+
+            db.upsertProjectSchemaVersion(new ProjectSchemaVersion(1, 2));
+            assertEquals(1002, db.findProjectPropertyAsInt(SiriusProjectDocumentDatabase.PROJECT_SCHEMA_VERSION_KEY)
+                    .orElseThrow(), "one integer, where released versions read it");
+            assertEquals(new ProjectSchemaVersion(1, 2), db.findProjectSchemaVersion().orElseThrow());
         });
     }
 
@@ -624,7 +663,7 @@ public class ProjectSchemaMigratorTest {
     @Test
     public void testAProjectWithoutAVersionIsMigratedAndStamped() {
         withOldProject(db -> {
-            assertTrue(db.findProjectSchemaVersion().orElse(0) < ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION,
+            assertTrue(db.findProjectSchemaVersion().map(v -> v.isOlderThan(ProjectSchemaMigrator.MIGRATES_TO_SCHEMA_VERSION)).orElse(true),
                     "the fixture is an old project");
 
             ProjectSchemaMigrator.migrateIfNeeded(db);

@@ -35,6 +35,7 @@ import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
+import de.unijena.bioinf.ms.persistence.storage.IncompatibleProjectSchemaException;
 import de.unijena.bioinf.projectspace.*;
 import lombok.Getter;
 import org.dizitart.no2.exceptions.NitriteIOException;
@@ -236,6 +237,8 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
                 psm = projectSpaceManagerFactory.createOrOpen(location);
             } catch (NitriteIOException e) {
                 throw new ResponseStatusException(HttpStatus.LOCKED, String.format("Project with ID '%s' could not be opened. Cause: %s", projectId, e.getMessage()), e);
+            } catch (IncompatibleProjectSchemaException e) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage(), e);
             }
             psm.setTempProject(tempProject);
             registerEventListeners(projectId, psm);
