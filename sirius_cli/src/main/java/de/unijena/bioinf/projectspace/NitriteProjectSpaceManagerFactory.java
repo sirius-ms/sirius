@@ -20,8 +20,6 @@
 
 package de.unijena.bioinf.projectspace;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.ms.persistence.model.core.DataSource;
