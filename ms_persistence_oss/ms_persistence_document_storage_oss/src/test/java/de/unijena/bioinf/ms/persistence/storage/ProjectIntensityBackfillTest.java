@@ -85,7 +85,7 @@ public class ProjectIntensityBackfillTest {
             runFeature.setApexIntensity(null);
             db.getStorage().upsert(runFeature);
         }
-        db.upsertProjectSchemaVersion(3);
+        db.upsertProjectSchemaVersion(new ProjectSchemaVersion(0, 3));
     }
 
     /** Reopens the project, so nothing the session kept in memory survives into what is checked. */
@@ -105,7 +105,7 @@ public class ProjectIntensityBackfillTest {
         assertTrue(ProjectSchemaMigrator.migrateIfNeeded(db), "an intensity was recorded, so the index is stale");
 
         assertEquals(recorded, runFeaturesOf(imported.getAlignedFeatureId()).getFirst().getApexIntensity());
-        assertEquals(4, db.findProjectSchemaVersion().orElseThrow());
+        assertEquals(new ProjectSchemaVersion(0, 4), db.findProjectSchemaVersion().orElseThrow());
         assertFalse(ProjectSchemaMigrator.migrateIfNeeded(db), "converted once, and then never again");
     }
 
@@ -127,7 +127,7 @@ public class ProjectIntensityBackfillTest {
         ProjectSchemaMigrator.migrateIfNeeded(db);
         assertNull(runFeaturesOf(imported.getAlignedFeatureId()).getFirst().getApexIntensity(),
                 "not walked, so not recorded");
-        assertEquals(4, db.findProjectSchemaVersion().orElseThrow(), "and still brought up to date");
+        assertEquals(new ProjectSchemaVersion(0, 4), db.findProjectSchemaVersion().orElseThrow(), "and still brought up to date");
     }
 
     /**
@@ -171,7 +171,7 @@ public class ProjectIntensityBackfillTest {
         Double recorded = runFeaturesOf(imported.getAlignedFeatureId()).getFirst().getApexIntensity();
         // an API import before version 4 wrote no run feature at all
         db.getStorage().removeAll(Filter.where("alignedFeatureId").eq(imported.getAlignedFeatureId()), Feature.class);
-        db.upsertProjectSchemaVersion(3);
+        db.upsertProjectSchemaVersion(new ProjectSchemaVersion(0, 3));
         reopen();
 
         ProjectSchemaMigrator.migrateIfNeeded(db);
@@ -196,7 +196,7 @@ public class ProjectIntensityBackfillTest {
         ProjectSchemaMigrator.migrateIfNeeded(db);
 
         assertNull(runFeaturesOf(imported.getAlignedFeatureId()).getFirst().getApexIntensity());
-        assertEquals(4, db.findProjectSchemaVersion().orElseThrow(), "and the project is current all the same");
+        assertEquals(new ProjectSchemaVersion(0, 4), db.findProjectSchemaVersion().orElseThrow(), "and the project is current all the same");
     }
 
     @Test

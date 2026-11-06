@@ -74,7 +74,17 @@ public class NitriteProjectSpaceManagerFactory implements ProjectSpaceManagerFac
             }
         }
         boolean exists = Files.exists(projectLocation);
-        NoSQLProjectSpaceManager projectSpaceManager = new NoSQLProjectSpaceManager(new NitriteSirirusProject(projectLocation));
+        NitriteSirirusProject storedProject = new NitriteSirirusProject(projectLocation);
+        if (exists) {
+            // before anything below writes to it: a project of a newer major schema stays as the newer SIRIUS left it
+            try {
+                storedProject.requireReadableSchema();
+            } catch (IOException e) {
+                storedProject.close();
+                throw e;
+            }
+        }
+        NoSQLProjectSpaceManager projectSpaceManager = new NoSQLProjectSpaceManager(storedProject);
         projectSpaceManager.setTempProject(tmpProject);
         projectSpaceManager.getProject().initDefaultTagDefinitions();
         projectSpaceManager.getProject().initDefaultGroups();
