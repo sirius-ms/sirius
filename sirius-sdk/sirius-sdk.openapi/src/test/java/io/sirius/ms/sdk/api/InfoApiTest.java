@@ -4,6 +4,7 @@ import io.sirius.ms.sdk.model.Info;
 import io.sirius.ms.sdk.SiriusClient;
 import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.runners.MethodSorters;
 
@@ -27,6 +28,7 @@ public class InfoApiTest {
         assertNotNull(instance);
     }
 
+    @Tag("dist-smoke")
     @Test
     public void getVersionInfoTest()  {
         Info response = instance.getInfo(null, null);

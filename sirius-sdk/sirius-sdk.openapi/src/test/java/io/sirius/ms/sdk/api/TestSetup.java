@@ -61,7 +61,7 @@ public class TestSetup {
             }
         }
 
-        siriusClient = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, true, true, true, findBootJar());
+        siriusClient = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, true, true, true, findSiriusUnderTest());
 
         // Log in exactly once per test session. Fail fast so a broken account setup produces one clear error
         // instead of many confusing downstream test failures. A reused, already logged-in instance is left as is.
@@ -71,6 +71,20 @@ public class TestSetup {
     static void requireCredentials(String value, String envVariableName) {
         if (value == null || value.isBlank())
             throw new IllegalStateException("Environment variable '" + envVariableName + "' must be set to run integration tests against the SIRIUS web services.");
+    }
+
+    /**
+     * The SIRIUS the tests run against: the launcher of an unpacked distribution if SIRIUS_TEST_EXECUTABLE names one
+     * (task distSmokeTest, CI jobs verify:&lt;platform&gt;), otherwise the boot jar of this build.
+     */
+    static Path findSiriusUnderTest() throws IOException {
+        String executable = System.getenv("SIRIUS_TEST_EXECUTABLE");
+        if (executable == null || executable.isBlank())
+            return findBootJar();
+        Path launcher = Path.of(executable);
+        if (!Files.isRegularFile(launcher))
+            throw new IOException("SIRIUS_TEST_EXECUTABLE '" + executable + "' is not a file.");
+        return launcher;
     }
 
     // use content dir of current module to navigate relatively to the bootjar location. Since the working directory is not always the same.
