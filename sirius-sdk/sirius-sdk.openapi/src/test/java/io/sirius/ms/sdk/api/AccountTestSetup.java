@@ -48,7 +48,7 @@ public class AccountTestSetup {
         workspaceDir = Files.createTempDirectory("sirius-account-test-workspace-");
         try {
             siriusClient = SiriusSDK.startAndConnectLocallyIsolated(
-                    SiriusSDK.ShutdownMode.AUTO, true, true, true, TestSetup.findBootJar(), workspaceDir);
+                    SiriusSDK.ShutdownMode.AUTO, true, true, true, TestSetup.findSiriusUnderTest(), workspaceDir);
         } catch (Exception e) {
             deleteRecursively(workspaceDir);
             throw e;

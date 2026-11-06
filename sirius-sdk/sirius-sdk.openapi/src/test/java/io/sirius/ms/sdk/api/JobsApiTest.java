@@ -4,6 +4,7 @@ import io.sirius.ms.sdk.model.*;
 import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -91,6 +92,7 @@ public class JobsApiTest {
         assertEquals(defJs.getConfigMap() != null && !defJs.getConfigMap().isEmpty(), includeConfigMap);
     }
 
+    @Tag("dist-smoke")
     @Test
     public void testGetJob() throws InterruptedException {
         JobSubmission defJs = instance.getDefaultJobConfig(true, false, false);

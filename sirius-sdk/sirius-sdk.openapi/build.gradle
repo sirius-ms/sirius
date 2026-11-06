@@ -28,3 +28,20 @@ accountIntegrationTest {
         showStandardStreams = false
     }
 }
+// Smoke test of a built package (CI job verify:<platform>): the tests tagged 'dist-smoke', run against the launcher of
+// an unpacked distribution, which SIRIUS_TEST_EXECUTABLE names, instead of the boot jar. No dependency on bootJar.
+tasks.register('distSmokeTest', Test) {
+    group = 'verification'
+    description = 'Runs the dist-smoke tests against the SIRIUS launcher named by SIRIUS_TEST_EXECUTABLE.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnitPlatform {
+        includeTags 'dist-smoke'
+    }
+    outputs.upToDateWhen { false }
+    def executable = providers.environmentVariable('SIRIUS_TEST_EXECUTABLE')
+    doFirst {
+        if (!executable.isPresent() || executable.get().isBlank())
+            throw new GradleException('SIRIUS_TEST_EXECUTABLE must name the launcher of an unpacked SIRIUS distribution.')
+    }
+}

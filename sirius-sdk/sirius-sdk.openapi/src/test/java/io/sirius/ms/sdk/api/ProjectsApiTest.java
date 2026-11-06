@@ -5,6 +5,7 @@ import io.sirius.ms.sdk.model.ProjectInfo;
 import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -71,6 +72,7 @@ public class ProjectsApiTest {
         }
     }
 
+    @Tag("dist-smoke")
     @Test
     public void createProjectTest() {
         String projectId = UUID.randomUUID().toString();
@@ -121,6 +123,7 @@ public class ProjectsApiTest {
         }
     }
 
+    @Tag("dist-smoke")
     @Test
     public void openProjectTest() {
         try {
@@ -167,6 +170,7 @@ public class ProjectsApiTest {
         );
     }
 
+    @Tag("dist-smoke")
     @ParameterizedTest
     @MethodSource
     public void importPreprocessedDataTest(String file, int expected) {
