@@ -197,10 +197,13 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     Optional<RunFeatureValues> deriveMaximumIntensitiesKeepingRunFeatures();
 
     /**
-     * Project property tracking the SIRIUS project-data schema version this project's data conforms to.
-     * Says nothing about how the storage underneath lays that data out - see
-     * {@code NitriteDatabase#isCompactionRecommended()} for that; it gates the one-time data conversion of
-     * older projects (see {@code ProjectSchemaMigrator}). Absent means "pre-versioning".
+     * Project property tracking the SIRIUS project-data schema version this project's data conforms to, as one
+     * integer - see {@link ProjectSchemaVersion#encoded()}. Says nothing about how the storage underneath lays
+     * that data out - see {@code NitriteDatabase#isCompactionRecommended()} for that; it gates the one-time data
+     * conversion of older projects (see {@code ProjectSchemaMigrator}). Absent means "pre-versioning".
+     * <p>
+     * Every released SIRIUS reads this key as an integer and compares it with its own, so it stays one: a
+     * project of a newer version still opens there, with a warning.
      */
     String PROJECT_SCHEMA_VERSION_KEY = "projectSchemaVersion";
 
@@ -209,16 +212,31 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
      * <p>
      * Raise it when a field is added that older projects cannot derive on the fly, and teach
      * {@code ProjectSchemaMigrator} to produce it in the same change - the two are asserted to agree, because a
-     * conversion left behind would quietly hand back projects a version older than newly created ones.
+     * conversion left behind would quietly hand back projects a version older than newly created ones. Raise the
+     * minor version when versions of the same major version can still read what the conversion produces, and
+     * the major version when they cannot: they refuse a project of a newer major version.
      */
-    int CURRENT_PROJECT_SCHEMA_VERSION = 4;
+    ProjectSchemaVersion CURRENT_PROJECT_SCHEMA_VERSION = new ProjectSchemaVersion(0, 4);
 
-    default Optional<Integer> findProjectSchemaVersion() {
-        return findProjectPropertyAsInt(PROJECT_SCHEMA_VERSION_KEY);
+    default Optional<ProjectSchemaVersion> findProjectSchemaVersion() {
+        return findProjectPropertyAsInt(PROJECT_SCHEMA_VERSION_KEY).map(ProjectSchemaVersion::decode);
     }
 
-    default Optional<Integer> upsertProjectSchemaVersion(int version) {
-        return upsertProjectProperty(PROJECT_SCHEMA_VERSION_KEY, version);
+    default void upsertProjectSchemaVersion(@NotNull ProjectSchemaVersion version) {
+        upsertProjectProperty(PROJECT_SCHEMA_VERSION_KEY, version.encoded());
+    }
+
+    /**
+     * Refuses a project this version cannot read - one of a newer major project-data schema - before anything is
+     * written to it.
+     *
+     * @throws IncompatibleProjectSchemaException if the project records a major version newer than this build's
+     */
+    default void requireReadableSchema() throws IOException {
+        Optional<ProjectSchemaVersion> recorded = findProjectSchemaVersion();
+        if (recorded.isPresent() && !CURRENT_PROJECT_SCHEMA_VERSION.canRead(recorded.get()))
+            throw new IncompatibleProjectSchemaException(getStorage().location().toString(), recorded.get(),
+                    CURRENT_PROJECT_SCHEMA_VERSION);
     }
 
     default Optional<ProjectDetectedAdducts> findDetectedAdducts() {
