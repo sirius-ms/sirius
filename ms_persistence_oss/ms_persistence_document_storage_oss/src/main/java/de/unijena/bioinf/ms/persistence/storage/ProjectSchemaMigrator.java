@@ -94,7 +94,7 @@ public class ProjectSchemaMigrator {
      * same number while someone keeps them so. Taking the schema's number would make a forgotten conversion
      * invisible - every project would claim to be current whether or not anything had filled it in.
      */
-    public static final int MIGRATES_TO_SCHEMA_VERSION = 4;
+    public static final ProjectSchemaVersion MIGRATES_TO_SCHEMA_VERSION = new ProjectSchemaVersion(0, 4);
 
     /** How many records gather before they are written, which is what bounds what a conversion holds. */
     private static final int BUFFER = 10_000;
@@ -184,9 +184,9 @@ public class ProjectSchemaMigrator {
                                           @Nullable JobProgressEventListener onProgress) throws IOException {
         EnumSet<ConversionJob.Pass> needed = neededPasses(project, project.getStorage());
         if (needed.isEmpty()) {
-            // Nothing to convert can still mean an older version: an LC-MS project needs nothing version 4 does.
+            // Nothing to convert can still mean an older version: an LC-MS project needs nothing version 0.4 does.
             // Stamped, so it reads as what it is - up to date.
-            if (project.findProjectSchemaVersion().orElse(0) < MIGRATES_TO_SCHEMA_VERSION)
+            if (recordedVersion(project).isOlderThan(MIGRATES_TO_SCHEMA_VERSION))
                 project.upsertProjectSchemaVersion(MIGRATES_TO_SCHEMA_VERSION);
             return false;
         }
@@ -252,6 +252,12 @@ public class ProjectSchemaMigrator {
         }
     }
 
+    /** The version a project records, {@code 0.0} for one written before projects recorded any. */
+    private static ProjectSchemaVersion recordedVersion(
+            @NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project) {
+        return project.findProjectSchemaVersion().orElse(new ProjectSchemaVersion(0, 0));
+    }
+
     /**
      * The passes that would do anything to the given project - empty if it is up to date.
      * <p>
@@ -268,32 +274,35 @@ public class ProjectSchemaMigrator {
     static EnumSet<ConversionJob.Pass> neededPasses(
             @NotNull SiriusProjectDocumentDatabase<? extends Database<?>> project,
             @NotNull Database<?> storage) throws IOException {
-        int recorded = project.findProjectSchemaVersion().orElse(0);
-        if (recorded > MIGRATES_TO_SCHEMA_VERSION) {
-            // Either the project comes from a newer SIRIUS, or the schema was raised here without the conversion
-            // being adapted to it. Converting would mean writing what this build believes the newer schema is,
-            // which is exactly what it does not know - so say so and change nothing.
+        // A project of a newer major version is not to be read at all, let alone converted. Opening one refuses it
+        // before this is asked; asked directly, the answer is the same.
+        project.requireReadableSchema();
+        ProjectSchemaVersion version = recordedVersion(project);
+        if (MIGRATES_TO_SCHEMA_VERSION.isOlderThan(version)) {
+            // A newer minor version of the same major version: readable, but converting would mean writing what
+            // this build believes the newer schema is, which is exactly what it does not know - so say so and
+            // change nothing.
             log.warn("Project '{}' records schema version {}, which is newer than the {} this version converts "
-                            + "to. It is left as it is; parts of it may not be understood.",
-                    storage.location(), recorded, MIGRATES_TO_SCHEMA_VERSION);
+                            + "to. It can be read, but is left as it is.",
+                    storage.location(), version, MIGRATES_TO_SCHEMA_VERSION);
             return EnumSet.noneOf(ConversionJob.Pass.class);
         }
 
         EnumSet<ConversionJob.Pass> needed = EnumSet.noneOf(ConversionJob.Pass.class);
-        // Everything the pre-index schema (version 2) filled in. The probe stands in for the version, so a
-        // project stamped 2 without having been filled in is treated as one that was never stamped.
-        if (recorded < 2 || !storage.isFieldPresent("hasMsMs", AlignedFeatures.class)) {
+        // Everything the pre-index schema (version 0.2) filled in. The probe stands in for the version, so a
+        // project stamped 0.2 without having been filled in is treated as one that was never stamped.
+        if (version.isOlderThan(new ProjectSchemaVersion(0, 2)) || !storage.isFieldPresent("hasMsMs", AlignedFeatures.class)) {
             needed.add(ConversionJob.Pass.FEATURES);
             needed.add(ConversionJob.Pass.FORMULA_CANDIDATES);
         }
-        // Version 3 drops the blank removal fold changes, for the user to recompute. Nothing to probe for: a
+        // Version 0.3 drops the blank removal fold changes, for the user to recompute. Nothing to probe for: a
         // project with none needs no repair, and the pass over an empty collection is free.
-        if (recorded < 3)
+        if (version.isOlderThan(new ProjectSchemaVersion(0, 3)))
             needed.add(ConversionJob.Pass.BLANK_REMOVAL_REPAIR);
-        // Version 4 gives features imported without an LC-MS trace their MS1 intensity. A project with LC-MS runs
+        // Version 0.4 gives features imported without an LC-MS trace their MS1 intensity. A project with LC-MS runs
         // has none of those - peak lists and API imports never go into one - and its features have carried the
         // intensity of their traces all along, so it is not walked feature by feature to find that out.
-        if (recorded < 4 && storage.countAll(LCMSRun.class) == 0)
+        if (version.isOlderThan(new ProjectSchemaVersion(0, 4)) && storage.countAll(LCMSRun.class) == 0)
             needed.add(ConversionJob.Pass.FEATURE_INTENSITIES);
         // There is no legitimate reason for a feature to carry a null compoundId, or for a project to hold
         // more compounds than features - every real compound has at least one, so either means this project
