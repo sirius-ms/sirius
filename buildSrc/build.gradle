@@ -7,6 +7,6 @@ repositories {
 }
 
 dependencies {
-    // Build-only: powers the `aiOverview` task (see src/main/java/aioverview).
+    // Build-only: Java source parsing for internal tooling (not part of the public repository).
     implementation libs.javaparser
 }

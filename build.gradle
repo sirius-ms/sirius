@@ -533,8 +533,6 @@ tasks.register('refreshChangelogDate') {
 }
 refreshReadMe.finalizedBy refreshChangelogDate
 
-/*################### OPTIONAL ################### */
-def agentToolingFile = file('gradle/agent-tooling.gradle')
-if (agentToolingFile.exists()) {
-    apply from: agentToolingFile
-}
+/*################### INTERNAL ################### */
+// Build scripts of internal tooling in gradle/internal: not part of the public repository, the build works without them.
+fileTree('gradle/internal') { include '*.gradle' }.files.sort().each { apply from: it }
