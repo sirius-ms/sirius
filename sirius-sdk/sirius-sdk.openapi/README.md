@@ -380,3 +380,8 @@ Endpoints do not require authorization.
 
 `SiriusClient` creates and owns the `ApiClient` shared by every endpoint group it exposes, so there is
 normally no reason to construct one yourself.
+
+If you do build your own `ApiClient` (or `WebClient`), give it `SiriusSDKUtils.clientConnector()` as its
+connector, or start your JVM with `--enable-native-access=ALL-UNNAMED`. Otherwise, on Windows with
+Java 24 or newer, file uploads (e.g. `importPreprocessedData`) fail with "ByteBuffer derived from
+closeable shared sessions not supported": Netty then allocates buffers that Windows' file channel rejects.
