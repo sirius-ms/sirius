@@ -1,12 +1,6 @@
 name: Build and Publish
+# Releases are built on GitLab now: no automatic builds on a push any more, only by hand.
 on:
-  push:
-    branches:
-      - stable
-      - master
-    paths-ignore:
-      - '**/README.md'
-      - 'sirius_doc/**/*'
   workflow_dispatch:
 
 jobs:
