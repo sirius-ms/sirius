@@ -25,7 +25,11 @@ ext {
                      '-XX:+ExitOnOutOfMemoryError',
                      '-Dspring.aot.enabled=true', // start sirius with spring aot optimization
                      '--add-opens=java.desktop/java.awt=ALL-UNNAMED', // needed to run jxbrowser properly
-                     '-XX:ThreadPriorityPolicy=1' // needed on linux/macos so that jjobs can lower the CPU worker thread priority below NORM
+                     '-XX:ThreadPriorityPolicy=1', // needed on linux/macos so that jjobs can lower the CPU worker thread priority below NORM
+                     // Native access for the libraries on the class path: the JDK warns about their restricted calls
+                     // and will block them in a future release; and Netty allocates its direct buffers with malloc
+                     // instead of from shared arenas, which Windows' asynchronous file channel rejects.
+                     '--enable-native-access=ALL-UNNAMED'
     ]
     OS = DefaultNativePlatform.currentOperatingSystem
 
