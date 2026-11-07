@@ -344,8 +344,10 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<ImportDBOption
             public synchronized void drop(DropTargetDropEvent evt) {
                 List<File> sf = DragAndDrop.getFileListFromDrop(owner, evt)
                         .stream().filter(supportedFiles::accept).toList();
+                evt.dropComplete(!sf.isEmpty());
                 if (sf.isEmpty())
-                    new InfoDialog(owner, "No supported files found in input. " + supportedFiles.getDescription() + " are supported.");
+                    // Show the dialog after the native drop callback has returned, so the drag source is not blocked.
+                    Jobs.runEDTLater(() -> new InfoDialog(owner, "No supported files found in input. " + supportedFiles.getDescription() + " are supported."));
                 else {
                     fileListModel.addAll(sf);
                     refreshImportButton();

@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.dialogs.input;
 
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import org.slf4j.LoggerFactory;
 
@@ -49,10 +50,13 @@ public class DragAndDrop {
             LoggerFactory.getLogger(DragAndDrop.class).error(e.getMessage(), e);
             return Collections.emptyList();
         } catch (ToManyFilesException e) {
-            if (popupOwner instanceof Frame)
-                new ExceptionDialog((Frame) popupOwner, e.getMessage());
-            else
-                new ExceptionDialog((Dialog) popupOwner, e.getMessage());
+            // Show the dialog after the native drop callback has returned, so the drag source is not blocked.
+            Jobs.runEDTLater(() -> {
+                if (popupOwner instanceof Frame)
+                    new ExceptionDialog((Frame) popupOwner, e.getMessage());
+                else
+                    new ExceptionDialog((Dialog) popupOwner, e.getMessage());
+            });
 
             LoggerFactory.getLogger(DragAndDrop.class).error(e.getMessage(), e);
             return Collections.emptyList();
