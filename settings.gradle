@@ -1,4 +1,10 @@
 rootProject.name = 'sirius'
+// Modules that the SIRIUS applications do not need. The public GitHub repository leaves them out, so they are
+// included only where their directory exists.
+def includeIfPresent = { String path ->
+    if (file(path.substring(1).replace(':', '/')).isDirectory())
+        include path
+}
 include ':graph_utils_oss'
 include ':default_properties'
 include ':default_properties:annotations'
@@ -11,16 +17,16 @@ include ':fragmentation_tree:fragmentation_tree_construction'
 include ":fragmentation_tree:FastFragmentationTreeAlign"
 include ":fragmentation_tree:FastFragmentationTreeAlign:FastTreeAlign"
 include ":fragmentation_tree:FastFragmentationTreeAlign:FTAlignmentTool"
-include ":fragmentation_tree:FastFragmentationTreeAlign:FTBlast"
+includeIfPresent ":fragmentation_tree:FastFragmentationTreeAlign:FTBlast"
 //        include ":fragmentation_tree:FastFragmentationTreeAlign:ClassicTreeAlign"
-include ":fragmentation_tree:FastFragmentationTreeAlign:AlignmentViewer"
-include ':fragmentation_tree:ft_glpk'
+includeIfPresent ":fragmentation_tree:FastFragmentationTreeAlign:AlignmentViewer"
+includeIfPresent ':fragmentation_tree:ft_glpk'
 include ':fragmentation_tree:ft_cplex'
 include ':fragmentation_tree:ft_gurobi'
 include ':fragmentation_tree:ft_cbc'
 include ':isotope_pattern'
 include ':isotope_pattern:isotope_pattern_analysis'
-include ':isotope_pattern:isogen_cli'
+includeIfPresent ':isotope_pattern:isogen_cli'
 include ':isotope_pattern:sirius_isotopes'
 include ':mass_decomposition'
 include ':mass_decomposition:mass_decomposer'
@@ -35,37 +41,37 @@ include ':passatutto:passatutto_project_space'
 include ':utils'
 include ':networks'
 include ':lcms'
-include ':lcms:lcms_gui'
-include ':lcms:mzml-converter'
+includeIfPresent ':lcms:lcms_gui'
+includeIfPresent ':lcms:mzml-converter'
 include ':lcms2'
 include ':quality_assessment'
-include ':retention_order_prediction_oss'
-include ':retention_order_prediction_oss:retention_cli'
+includeIfPresent ':retention_order_prediction_oss'
+includeIfPresent ':retention_order_prediction_oss:retention_cli'
 include ':fingerprinter_oss'
-include ':fingerprinter_oss:fingerprinter_cli'
+includeIfPresent ':fingerprinter_oss:fingerprinter_cli'
 include ':fingerprint_pvalues_oss'
 include ':fingerblast_oss'
 include ':fingerid_base_oss'
 
 include ':chemical_db_oss'
 include ':chemical_db_oss:chemdb_sql_oss'
-include ':chemical_db_oss:chemdb_sql_jdbi_json_oss'
+includeIfPresent ':chemical_db_oss:chemdb_sql_jdbi_json_oss'
 include ':chemical_db_oss:chemdb_blob_oss'
 include ':chemical_db_oss:chemdb_nitrite_oss'
 include ':chemical_db_oss:chemdb_utils_oss'
 include ':chemical_db_oss:chemdb_rest_oss'
 
-include ':ml_utils'
+includeIfPresent ':ml_utils'
 
 include ':combinatorial_fragmenter'
-include ':rabbitmq-support'
+includeIfPresent ':rabbitmq-support'
 include ':blob-storage'
 include ':document-storage'
-include ':blob-storage:gcs-blob-storage'
+includeIfPresent ':blob-storage:gcs-blob-storage'
 include ':model_store_oss'
 include ':ms_persistence_oss'
 include ':ms_persistence_oss:ms_persistence_model_oss'
-include ':ms_persistence_oss:ms_persistence_io_oss'
+includeIfPresent ':ms_persistence_oss:ms_persistence_io_oss'
 include ':ms_persistence_oss:ms_persistence_document_storage_oss'
 
 
@@ -79,10 +85,10 @@ include ':web_service_oss:sirius_web_client'
 include ':web_service_oss:web_core_oss'
 include ':web_service_oss:rest_client_oss'
 include ':web_service_oss:client_auth_oss'
-include ':web_service_oss:scribejava-httpclient-apache5'
+includeIfPresent ':web_service_oss:scribejava-httpclient-apache5'
 include ':web_service_oss:jwt_utils'
 
-include ':affinity_selection_ms'
+includeIfPresent ':affinity_selection_ms'
 include ':structure_matching'
 
 include ':sirius_cli'
