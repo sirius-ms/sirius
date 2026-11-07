@@ -2,11 +2,16 @@ package io.sirius.ms.sdk;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.ChannelOption;
 import io.sirius.ms.sdk.api.ActuatorApi;
 import io.sirius.ms.sdk.client.ApiClient;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.reactive.ClientHttpConnector;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import reactor.netty.http.client.HttpClient;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,6 +117,19 @@ public class SiriusSDKUtils {
 
     public static boolean isWindows() {
         return System.getProperty("os.name").toLowerCase().contains("win");
+    }
+
+    /**
+     * The HTTP connector of the SDK's web client: Reactor Netty with heap instead of direct buffers.
+     * <p>
+     * On JDK 24+ without native access (no {@code --enable-native-access=ALL-UNNAMED}), Netty allocates its direct
+     * buffers from shared arenas. Windows' asynchronous file channel rejects those ("ByteBuffer derived from closeable
+     * shared sessions not supported"), so every file upload would fail there. Uploads read files into heap buffers
+     * instead, which every platform handles, whatever options the client's JVM was started with.
+     */
+    public static ClientHttpConnector clientConnector() {
+        return new ReactorClientHttpConnector(HttpClient.create()
+                .option(ChannelOption.ALLOCATOR, new PooledByteBufAllocator(false)));
     }
 
     public static boolean restShutdown(ApiClient client) {

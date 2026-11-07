@@ -167,6 +167,7 @@ public final class SiriusSDK extends SiriusClient {
             try {
                 int port = Integer.parseInt(Files.readAllLines(SIRIUS_PORT_FILE).getFirst());
                 ApiClient apiClient = new ApiClient(buildWebClientBuilder(createDefaultObjectMapper(createDefaultDateFormat()))
+                        .clientConnector(clientConnector())
                         .codecs(codecs -> codecs
                                 .defaultCodecs()
                                 .maxInMemorySize(100 * 1024 * 1024))
